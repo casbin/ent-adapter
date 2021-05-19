@@ -183,6 +183,10 @@ func testAutoSave(t *testing.T, a *Adapter) {
 	e.RemoveFilteredPolicy(0, "data2_admin")
 	e.LoadPolicy()
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
+
+	e.RemovePolicies([][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
+	e.LoadPolicy()
+	testGetPolicy(t, e, [][]string{})
 }
 
 //func testFilteredPolicy(t *testing.T, a *Adapter) {
@@ -225,7 +229,7 @@ func testUpdatePolicies(t *testing.T, a *Adapter) {
 	e.EnableAutoSave(true)
 	e.UpdatePolicies([][]string{{"alice", "data1", "write"}, {"bob", "data2", "write"}}, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}})
 	e.LoadPolicy()
-	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
+	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
 func testUpdateFilteredPolicies(t *testing.T, a *Adapter) {
@@ -234,7 +238,7 @@ func testUpdateFilteredPolicies(t *testing.T, a *Adapter) {
 
 	e.EnableAutoSave(true)
 	e.UpdateFilteredPolicies([][]string{{"alice", "data1", "write"}}, 0, "alice", "data1", "read")
-	e.UpdateFilteredPolicies([][]string{{"bob", "data2", "read"}}, 0, "bob", "data2", "write")
+	e.UpdateFilteredPolicies([][]string{{"bob", "data2", "read"}}, 0, "bob", "data2")
 	e.LoadPolicy()
 	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}, {"bob", "data2", "read"}})
 }
@@ -263,4 +267,14 @@ func TestAdapters(t *testing.T) {
 	a = initAdapterWithClientInstance(t, db)
 	testAutoSave(t, a)
 	testSaveLoad(t, a)
+
+	a = initAdapter(t, "mysql", "root:@tcp(127.0.0.1:3306)/casbin")
+	testUpdatePolicy(t, a)
+	testUpdatePolicies(t, a)
+	testUpdateFilteredPolicies(t, a)
+
+	a = initAdapter(t, "postgres", "user=postgres password=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=casbin")
+	testUpdatePolicy(t, a)
+	testUpdatePolicies(t, a)
+	testUpdateFilteredPolicies(t, a)
 }
