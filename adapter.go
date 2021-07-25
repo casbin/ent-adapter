@@ -17,6 +17,8 @@ package entadapter
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"reflect"
 	"strings"
 
 	"entgo.io/ent/dialect"
@@ -30,6 +32,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/lib/pq"
+
 	//_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 )
@@ -42,6 +45,18 @@ const (
 type Adapter struct {
 	client *ent.Client
 	ctx    context.Context
+
+	filtered bool
+}
+
+type Filter struct {
+	Ptype []string
+	V0    []string
+	V1    []string
+	V2    []string
+	V3    []string
+	V4    []string
+	V5    []string
 }
 
 type Option func(a *Adapter) error
@@ -109,6 +124,56 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 		loadPolicyLine(policy, model)
 	}
 	return nil
+}
+
+// LoadFilteredPolicy loads only policy rules that match the filter.
+// Filter is a map[string][]string, key denotes ptype, []string is policy
+func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) error {
+
+	filterValue, ok := filter.(Filter)
+	if !ok {
+		return fmt.Errorf("invalid filter type: %v", reflect.TypeOf(filter))
+	}
+
+	session := a.client.CasbinRule.Query()
+	if len(filterValue.Ptype) != 0 {
+		session.Where(casbinrule.PtypeIn(filterValue.Ptype...))
+	}
+	if len(filterValue.V0) != 0 {
+		session.Where(casbinrule.V0In(filterValue.V0...))
+	}
+	if len(filterValue.V1) != 0 {
+		session.Where(casbinrule.V1In(filterValue.V1...))
+	}
+	if len(filterValue.V2) != 0 {
+		session.Where(casbinrule.V2In(filterValue.V2...))
+	}
+	if len(filterValue.V3) != 0 {
+		session.Where(casbinrule.V3In(filterValue.V3...))
+	}
+	if len(filterValue.V4) != 0 {
+		session.Where(casbinrule.V4In(filterValue.V4...))
+	}
+	if len(filterValue.V5) != 0 {
+		session.Where(casbinrule.V5In(filterValue.V5...))
+	}
+
+	lines, err := session.All(a.ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, line := range lines {
+		loadPolicyLine(line, model)
+	}
+	a.filtered = true
+
+	return nil
+}
+
+// IsFiltered returns true if the loaded policy has been filtered.
+func (a *Adapter) IsFiltered() bool {
+	return a.filtered
 }
 
 // SavePolicy saves all policy rules to the storage.
