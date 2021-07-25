@@ -38,6 +38,10 @@ jobs:
       - name: Run Unit tests
         run: go test -v -coverprofile=./profile.cov ./...
 
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: ./profile.cov
+
   semantic-release:
     needs: [test]
     runs-on: ubuntu-latest
