@@ -22,6 +22,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/util"
 	"github.com/casbin/ent-adapter/ent"
+	"github.com/stretchr/testify/assert"
 )
 
 func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
