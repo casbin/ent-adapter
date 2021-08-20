@@ -15,6 +15,7 @@
 package entadapter
 
 import (
+	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
 
@@ -241,6 +242,32 @@ func testUpdateFilteredPolicies(t *testing.T, a *Adapter) {
 	e.UpdateFilteredPolicies([][]string{{"bob", "data2", "read"}}, 0, "bob", "data2")
 	e.LoadPolicy()
 	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}, {"bob", "data2", "read"}})
+}
+
+func testFilteredPolicy(t *testing.T, a *Adapter) {
+	// NewEnforcer() without an adapter will not auto load the policy
+	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+
+	// Now set the adapter
+	e.SetAdapter(a)
+
+	assert.Nil(t, e.SavePolicy())
+
+	// Load only alice's policies
+	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"alice"}}))
+	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}})
+
+	// Load only bob's policies
+	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"bob"}}))
+	testGetPolicy(t, e, [][]string{{"bob", "data2", "write"}})
+
+	// Load policies for data2_admin
+	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"data2_admin"}}))
+	testGetPolicy(t, e, [][]string{{"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
+
+	// Load policies for alice and bob
+	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"alice", "bob"}}))
+	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
 }
 
 func TestAdapters(t *testing.T) {
