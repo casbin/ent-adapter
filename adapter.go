@@ -127,7 +127,7 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 }
 
 // LoadFilteredPolicy loads only policy rules that match the filter.
-// Filter is a map[string][]string, key denotes ptype, []string is policy
+// Filter parameter here is a Filter structure
 func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) error {
 
 	filterValue, ok := filter.(Filter)
