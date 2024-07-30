@@ -1,40 +1,31 @@
-// Copyright 2021 The casbin Authors. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+{{ /* Tell Intellij/GoLand to enable the autocompletion based on the *gen.Graph type. */ }}
+{{ /* gotype: entgo.io/ent/entc/gen.Graph */ }}
 
-package entadapter
+{{ define "casbin" }}
+
+{{ /* Add the base header for the generated file */ }}
+{{ $pkg := base $.Config.Package }}
+{{ template "header" $ }}
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"reflect"
-	"strings"
+    "context"
+    "database/sql"
+    "fmt"
+    "reflect"
+    "strings"
 
-	"entgo.io/ent/dialect"
-	entsql "entgo.io/ent/dialect/sql"
-	"github.com/casbin/casbin/v2/persist"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
-	"github.com/casbin/ent-adapter/ent/predicate"
+    "entgo.io/ent/dialect"
+    entsql "entgo.io/ent/dialect/sql"
+    "github.com/casbin/casbin/v2/persist"
+    "{{ $.Config.Package }}/casbinrule"
+    "{{ $.Config.Package }}/predicate"
 
-	"github.com/casbin/casbin/v2/model"
-	"github.com/casbin/ent-adapter/ent"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/lib/pq"
+    "github.com/casbin/casbin/v2/model"
+    _ "github.com/go-sql-driver/mysql"
+    _ "github.com/jackc/pgx/v5/stdlib"
+    _ "github.com/lib/pq"
 
-	//_ "github.com/mattn/go-sqlite3"
-	"github.com/pkg/errors"
+    "github.com/pkg/errors"
 )
 
 const (
@@ -43,7 +34,7 @@ const (
 )
 
 type Adapter struct {
-	client *ent.Client
+	client *Client
 	ctx    context.Context
 
 	filtered bool
@@ -59,9 +50,7 @@ type Filter struct {
 	V5    []string
 }
 
-type Option func(a *Adapter) error
-
-func open(driverName, dataSourceName string) (*ent.Client, error) {
+func open(driverName, dataSourceName string) (*Client, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
@@ -72,11 +61,11 @@ func open(driverName, dataSourceName string) (*ent.Client, error) {
 	} else {
 		drv = entsql.OpenDB(driverName, db)
 	}
-	return ent.NewClient(ent.Driver(drv)), nil
+	return NewClient(Driver(drv)), nil
 }
 
 // NewAdapter returns an adapter by driver name and data source string.
-func NewAdapter(driverName, dataSourceName string, options ...Option) (*Adapter, error) {
+func NewAdapter(driverName, dataSourceName string) (*Adapter, error) {
 	client, err := open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
@@ -84,11 +73,6 @@ func NewAdapter(driverName, dataSourceName string, options ...Option) (*Adapter,
 	a := &Adapter{
 		client: client,
 		ctx:    context.Background(),
-	}
-	for _, option := range options {
-		if err := option(a); err != nil {
-			return nil, err
-		}
 	}
 	if err := client.Schema.Create(a.ctx); err != nil {
 		return nil, err
@@ -98,15 +82,10 @@ func NewAdapter(driverName, dataSourceName string, options ...Option) (*Adapter,
 
 // NewAdapterWithClient create an adapter with client passed in.
 // This method does not ensure the existence of database, user should create database manually.
-func NewAdapterWithClient(client *ent.Client, options ...Option) (*Adapter, error) {
+func NewAdapterWithClient(client *Client) (*Adapter, error) {
 	a := &Adapter{
 		client: client,
 		ctx:    context.Background(),
-	}
-	for _, option := range options {
-		if err := option(a); err != nil {
-			return nil, err
-		}
 	}
 	if err := client.Schema.Create(a.ctx); err != nil {
 		return nil, err
@@ -116,7 +95,7 @@ func NewAdapterWithClient(client *ent.Client, options ...Option) (*Adapter, erro
 
 // LoadPolicy loads all policy rules from the storage.
 func (a *Adapter) LoadPolicy(model model.Model) error {
-	policies, err := a.client.CasbinRule.Query().Order(ent.Asc("id")).All(a.ctx)
+	policies, err := a.client.CasbinRule.Query().Order(Asc("id")).All(a.ctx)
 	if err != nil {
 		return err
 	}
@@ -178,11 +157,11 @@ func (a *Adapter) IsFiltered() bool {
 
 // SavePolicy saves all policy rules to the storage.
 func (a *Adapter) SavePolicy(model model.Model) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		if _, err := tx.CasbinRule.Delete().Exec(a.ctx); err != nil {
 			return err
 		}
-		lines := make([]*ent.CasbinRuleCreate, 0)
+		lines := make([]*CasbinRuleCreate, 0)
 
 		for ptype, ast := range model["p"] {
 			for _, policy := range ast.Policy {
@@ -206,7 +185,7 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 // AddPolicy adds a policy rule to the storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		_, err := a.savePolicyLine(tx, ptype, rule).Save(a.ctx)
 		return err
 	})
@@ -215,7 +194,7 @@ func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
 // RemovePolicy removes a policy rule from the storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		instance := a.toInstance(ptype, rule)
 		_, err := tx.CasbinRule.Delete().Where(
 			casbinrule.PtypeEQ(instance.Ptype),
@@ -233,7 +212,7 @@ func (a *Adapter) RemovePolicy(sec string, ptype string, rule []string) error {
 // RemoveFilteredPolicy removes policy rules that match the filter from the storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		cond := make([]predicate.CasbinRule, 0)
 		cond = append(cond, casbinrule.PtypeEQ(ptype))
 		if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) && len(fieldValues[0-fieldIndex]) > 0 {
@@ -264,7 +243,7 @@ func (a *Adapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int,
 // AddPolicies adds policy rules to the storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) AddPolicies(sec string, ptype string, rules [][]string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		return a.createPolicies(tx, ptype, rules)
 	})
 }
@@ -272,7 +251,7 @@ func (a *Adapter) AddPolicies(sec string, ptype string, rules [][]string) error 
 // RemovePolicies removes policy rules from the storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) RemovePolicies(sec string, ptype string, rules [][]string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		for _, rule := range rules {
 			instance := a.toInstance(ptype, rule)
 			if _, err := tx.CasbinRule.Delete().Where(
@@ -291,7 +270,7 @@ func (a *Adapter) RemovePolicies(sec string, ptype string, rules [][]string) err
 	})
 }
 
-func (a *Adapter) WithTx(fn func(tx *ent.Tx) error) error {
+func (a *Adapter) WithTx(fn func(tx *Tx) error) error {
 	tx, err := a.client.Tx(a.ctx)
 	if err != nil {
 		return err
@@ -314,7 +293,7 @@ func (a *Adapter) WithTx(fn func(tx *ent.Tx) error) error {
 	return nil
 }
 
-func loadPolicyLine(line *ent.CasbinRule, model model.Model) {
+func loadPolicyLine(line *CasbinRule, model model.Model) {
 	var p = []string{line.Ptype,
 		line.V0, line.V1, line.V2, line.V3, line.V4, line.V5}
 
@@ -336,8 +315,8 @@ func loadPolicyLine(line *ent.CasbinRule, model model.Model) {
 	persist.LoadPolicyLine(lineText, model)
 }
 
-func (a *Adapter) toInstance(ptype string, rule []string) *ent.CasbinRule {
-	instance := &ent.CasbinRule{}
+func (a *Adapter) toInstance(ptype string, rule []string) *CasbinRule {
+	instance := &CasbinRule{}
 
 	instance.Ptype = ptype
 
@@ -362,7 +341,7 @@ func (a *Adapter) toInstance(ptype string, rule []string) *ent.CasbinRule {
 	return instance
 }
 
-func (a *Adapter) savePolicyLine(tx *ent.Tx, ptype string, rule []string) *ent.CasbinRuleCreate {
+func (a *Adapter) savePolicyLine(tx *Tx, ptype string, rule []string) *CasbinRuleCreate {
 	line := tx.CasbinRule.Create()
 
 	line.SetPtype(ptype)
@@ -391,7 +370,7 @@ func (a *Adapter) savePolicyLine(tx *ent.Tx, ptype string, rule []string) *ent.C
 // UpdatePolicy updates a policy rule from storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) UpdatePolicy(sec string, ptype string, oldRule, newPolicy []string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		rule := a.toInstance(ptype, oldRule)
 		line := tx.CasbinRule.Update().Where(
 			casbinrule.PtypeEQ(rule.Ptype),
@@ -416,7 +395,7 @@ func (a *Adapter) UpdatePolicy(sec string, ptype string, oldRule, newPolicy []st
 
 // UpdatePolicies updates some policy rules to storage, like db, redis.
 func (a *Adapter) UpdatePolicies(sec string, ptype string, oldRules, newRules [][]string) error {
-	return a.WithTx(func(tx *ent.Tx) error {
+	return a.WithTx(func(tx *Tx) error {
 		for _, policy := range oldRules {
 			rule := a.toInstance(ptype, policy)
 			if _, err := tx.CasbinRule.Delete().Where(
@@ -431,7 +410,7 @@ func (a *Adapter) UpdatePolicies(sec string, ptype string, oldRules, newRules []
 				return err
 			}
 		}
-		lines := make([]*ent.CasbinRuleCreate, 0)
+		lines := make([]*CasbinRuleCreate, 0)
 		for _, policy := range newRules {
 			lines = append(lines, a.savePolicyLine(tx, ptype, policy))
 		}
@@ -445,7 +424,7 @@ func (a *Adapter) UpdatePolicies(sec string, ptype string, oldRules, newRules []
 // UpdateFilteredPolicies deletes old rules and adds new rules.
 func (a *Adapter) UpdateFilteredPolicies(sec string, ptype string, newPolicies [][]string, fieldIndex int, fieldValues ...string) ([][]string, error) {
 	oldPolicies := make([][]string, 0)
-	err := a.WithTx(func(tx *ent.Tx) error {
+	err := a.WithTx(func(tx *Tx) error {
 		cond := make([]predicate.CasbinRule, 0)
 		cond = append(cond, casbinrule.PtypeEQ(ptype))
 		if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) && len(fieldValues[0-fieldIndex]) > 0 {
@@ -498,8 +477,8 @@ func (a *Adapter) UpdateFilteredPolicies(sec string, ptype string, newPolicies [
 	return oldPolicies, nil
 }
 
-func (a *Adapter) createPolicies(tx *ent.Tx, ptype string, policies [][]string) error {
-	lines := make([]*ent.CasbinRuleCreate, 0)
+func (a *Adapter) createPolicies(tx *Tx, ptype string, policies [][]string) error {
+	lines := make([]*CasbinRuleCreate, 0)
 	for _, policy := range policies {
 		lines = append(lines, a.savePolicyLine(tx, ptype, policy))
 	}
@@ -509,7 +488,7 @@ func (a *Adapter) createPolicies(tx *ent.Tx, ptype string, policies [][]string) 
 	return nil
 }
 
-func CasbinRuleToStringArray(rule *ent.CasbinRule) []string {
+func CasbinRuleToStringArray(rule *CasbinRule) []string {
 	arr := make([]string, 0)
 	if rule.V0 != "" {
 		arr = append(arr, rule.V0)
@@ -531,3 +510,5 @@ func CasbinRuleToStringArray(rule *ent.CasbinRule) []string {
 	}
 	return arr
 }
+
+{{ end }}

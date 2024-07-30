@@ -77,7 +77,7 @@ func arrayEqualsWithoutOrder(a [][]string, b [][]string) bool {
 	return true
 }
 
-func initPolicy(t *testing.T, a *Adapter) {
+func initPolicy(t *testing.T, a *ent.Adapter) {
 	// Because the DB is empty at first,
 	// so we need to load the policy from the file adapter (.CSV) first.
 	e, err := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
@@ -105,7 +105,7 @@ func initPolicy(t *testing.T, a *Adapter) {
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
-func testSaveLoad(t *testing.T, a *Adapter) {
+func testSaveLoad(t *testing.T, a *ent.Adapter) {
 	// Initialize some policy in DB.
 	initPolicy(t, a)
 	// Note: you don't need to look at the above code
@@ -119,9 +119,9 @@ func testSaveLoad(t *testing.T, a *Adapter) {
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
-func initAdapter(t *testing.T, driverName string, dataSourceName string, options ...Option) *Adapter {
+func initAdapter(t *testing.T, driverName string, dataSourceName string) *ent.Adapter {
 	// Create an adapter
-	a, err := NewAdapter(driverName, dataSourceName, options...)
+	a, err := ent.NewAdapter(driverName, dataSourceName)
 	if err != nil {
 		panic(err)
 	}
@@ -135,9 +135,9 @@ func initAdapter(t *testing.T, driverName string, dataSourceName string, options
 	return a
 }
 
-func initAdapterWithClientInstance(t *testing.T, client *ent.Client) *Adapter {
+func initAdapterWithClientInstance(t *testing.T, client *ent.Client) *ent.Adapter {
 	// Create an adapter
-	a, _ := NewAdapterWithClient(client)
+	a, _ := ent.NewAdapterWithClient(client)
 	// Initialize some policy in DB.
 	initPolicy(t, a)
 	// Now the DB has policy, so we can provide a normal use case.
@@ -147,7 +147,7 @@ func initAdapterWithClientInstance(t *testing.T, client *ent.Client) *Adapter {
 	return a
 }
 
-func testAutoSave(t *testing.T, a *Adapter) {
+func testAutoSave(t *testing.T, a *ent.Adapter) {
 
 	// NewEnforcer() will load the policy automatically.
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
@@ -213,7 +213,7 @@ func testAutoSave(t *testing.T, a *Adapter) {
 //	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
 //}
 
-func testUpdatePolicy(t *testing.T, a *Adapter) {
+func testUpdatePolicy(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() will load the policy automatically.
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
@@ -223,7 +223,7 @@ func testUpdatePolicy(t *testing.T, a *Adapter) {
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "write"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
-func testUpdatePolicies(t *testing.T, a *Adapter) {
+func testUpdatePolicies(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() will load the policy automatically.
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
@@ -233,7 +233,7 @@ func testUpdatePolicies(t *testing.T, a *Adapter) {
 	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
-func testUpdateFilteredPolicies(t *testing.T, a *Adapter) {
+func testUpdateFilteredPolicies(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() will load the policy automatically.
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
@@ -244,7 +244,7 @@ func testUpdateFilteredPolicies(t *testing.T, a *Adapter) {
 	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}, {"bob", "data2", "read"}})
 }
 
-func testFilteredPolicy(t *testing.T, a *Adapter) {
+func testFilteredPolicy(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() without an adapter will not auto load the policy
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
 
@@ -254,19 +254,19 @@ func testFilteredPolicy(t *testing.T, a *Adapter) {
 	assert.Nil(t, e.SavePolicy())
 
 	// Load only alice's policies
-	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"alice"}}))
+	assert.Nil(t, e.LoadFilteredPolicy(ent.Filter{V0: []string{"alice"}}))
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}})
 
 	// Load only bob's policies
-	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"bob"}}))
+	assert.Nil(t, e.LoadFilteredPolicy(ent.Filter{V0: []string{"bob"}}))
 	testGetPolicy(t, e, [][]string{{"bob", "data2", "write"}})
 
 	// Load policies for data2_admin
-	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"data2_admin"}}))
+	assert.Nil(t, e.LoadFilteredPolicy(ent.Filter{V0: []string{"data2_admin"}}))
 	testGetPolicy(t, e, [][]string{{"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 
 	// Load policies for alice and bob
-	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"alice", "bob"}}))
+	assert.Nil(t, e.LoadFilteredPolicy(ent.Filter{V0: []string{"alice", "bob"}}))
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
 }
 
