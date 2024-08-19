@@ -2,7 +2,7 @@
 
 package runtime
 
-// The schema-stitching logic is generated in github.com/casbin/ent-adapter/ent/runtime.go
+// The schema-stitching logic is generated in github.com/casbin/ent-adapter/examples/ent/runtime.go
 
 const (
 	Version = "v0.14.0"                                         // Version of ent codegen.

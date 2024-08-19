@@ -12,7 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
+	"github.com/casbin/ent-adapter/examples/ent/casbinrule"
 )
 
 // ent aliases to avoid import conflicts in user's code.

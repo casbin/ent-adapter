@@ -2,7 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
-	"github.com/casbin/ent-adapter/template"
+	"github.com/casbin/ent-adapter"
 )
 
 // CasbinRule holds the schema definition for the CasbinRule entity.
@@ -12,6 +12,6 @@ type CasbinRule struct {
 
 func (CasbinRule) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		template.CasbinRuleMixin{},
+		entadapter.CasbinRuleMixin{},
 	}
 }

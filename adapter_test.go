@@ -20,7 +20,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/util"
-	"github.com/casbin/ent-adapter/ent"
+	"github.com/casbin/ent-adapter/examples/ent"
 	"github.com/stretchr/testify/assert"
 )
 

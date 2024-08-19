@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/casbin/ent-adapter/ent"
+	"github.com/casbin/ent-adapter/examples/ent"
 	// required by schema hooks.
-	_ "github.com/casbin/ent-adapter/ent/runtime"
+	_ "github.com/casbin/ent-adapter/examples/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/casbin/ent-adapter/ent/migrate"
+	"github.com/casbin/ent-adapter/examples/ent/migrate"
 )
 
 type (

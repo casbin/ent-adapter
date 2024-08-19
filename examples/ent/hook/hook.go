@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/casbin/ent-adapter/ent"
+	"github.com/casbin/ent-adapter/examples/ent"
 )
 
 // The CasbinRuleFunc type is an adapter to allow the use of ordinary

@@ -1,4 +1,4 @@
-package template
+package entadapter
 
 import (
 	"entgo.io/ent"

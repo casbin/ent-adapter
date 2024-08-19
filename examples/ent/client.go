@@ -9,12 +9,12 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/casbin/ent-adapter/ent/migrate"
+	"github.com/casbin/ent-adapter/examples/ent/migrate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
+	"github.com/casbin/ent-adapter/examples/ent/casbinrule"
 )
 
 // Client is the client that holds all ent builders.

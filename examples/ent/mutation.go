@@ -10,8 +10,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
-	"github.com/casbin/ent-adapter/ent/predicate"
+	"github.com/casbin/ent-adapter/examples/ent/casbinrule"
+	"github.com/casbin/ent-adapter/examples/ent/predicate"
 )
 
 const (

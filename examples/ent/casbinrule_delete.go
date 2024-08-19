@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
-	"github.com/casbin/ent-adapter/ent/predicate"
+	"github.com/casbin/ent-adapter/examples/ent/casbinrule"
+	"github.com/casbin/ent-adapter/examples/ent/predicate"
 )
 
 // CasbinRuleDelete is the builder for deleting a CasbinRule entity.
