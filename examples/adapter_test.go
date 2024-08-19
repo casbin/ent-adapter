@@ -80,7 +80,7 @@ func arrayEqualsWithoutOrder(a [][]string, b [][]string) bool {
 func initPolicy(t *testing.T, a *ent.Adapter) {
 	// Because the DB is empty at first,
 	// so we need to load the policy from the file adapter (.CSV) first.
-	e, err := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	e, err := casbin.NewEnforcer("rbac_model.conf", "rbac_policy.csv")
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +115,7 @@ func testSaveLoad(t *testing.T, a *ent.Adapter) {
 	// Create an adapter and an enforcer.
 	// NewEnforcer() will load the policy automatically.
 
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ := casbin.NewEnforcer("rbac_model.conf", a)
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
@@ -150,7 +150,7 @@ func initAdapterWithClientInstance(t *testing.T, client *ent.Client) *ent.Adapte
 func testAutoSave(t *testing.T, a *ent.Adapter) {
 
 	// NewEnforcer() will load the policy automatically.
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ := casbin.NewEnforcer("rbac_model.conf", a)
 	// AutoSave is enabled by default.
 	// Now we disable it.
 	e.EnableAutoSave(false)
@@ -192,7 +192,7 @@ func testAutoSave(t *testing.T, a *ent.Adapter) {
 
 //func testFilteredPolicy(t *testing.T, a *Adapter) {
 //	// NewEnforcer() without an adapter will not auto load the policy
-//	e, _ := casbin.NewEnforcer("examples/rbac_model.conf")
+//	e, _ := casbin.NewEnforcer("rbac_model.conf")
 //	// Now set the adapter
 //	e.SetAdapter(a)
 //
@@ -215,7 +215,7 @@ func testAutoSave(t *testing.T, a *ent.Adapter) {
 
 func testUpdatePolicy(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() will load the policy automatically.
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ := casbin.NewEnforcer("rbac_model.conf", a)
 
 	e.EnableAutoSave(true)
 	e.UpdatePolicy([]string{"alice", "data1", "read"}, []string{"alice", "data1", "write"})
@@ -225,7 +225,7 @@ func testUpdatePolicy(t *testing.T, a *ent.Adapter) {
 
 func testUpdatePolicies(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() will load the policy automatically.
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ := casbin.NewEnforcer("rbac_model.conf", a)
 
 	e.EnableAutoSave(true)
 	e.UpdatePolicies([][]string{{"alice", "data1", "write"}, {"bob", "data2", "write"}}, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}})
@@ -235,7 +235,7 @@ func testUpdatePolicies(t *testing.T, a *ent.Adapter) {
 
 func testUpdateFilteredPolicies(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() will load the policy automatically.
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
+	e, _ := casbin.NewEnforcer("rbac_model.conf", a)
 
 	e.EnableAutoSave(true)
 	e.UpdateFilteredPolicies([][]string{{"alice", "data1", "write"}}, 0, "alice", "data1", "read")
@@ -246,7 +246,7 @@ func testUpdateFilteredPolicies(t *testing.T, a *ent.Adapter) {
 
 func testFilteredPolicy(t *testing.T, a *ent.Adapter) {
 	// NewEnforcer() without an adapter will not auto load the policy
-	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", "examples/rbac_policy.csv")
+	e, _ := casbin.NewEnforcer("rbac_model.conf", "rbac_policy.csv")
 
 	// Now set the adapter
 	e.SetAdapter(a)
