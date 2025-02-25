@@ -20,12 +20,16 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/util"
-	"github.com/casbin/ent-adapter/ent"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/casbin/ent-adapter/ent"
 )
 
 func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
-	myRes := e.GetPolicy()
+	myRes, err := e.GetPolicy()
+	if err != nil {
+		t.Error("Get Policy Error ", err)
+	}
 	log.Print("Policy: ", myRes)
 
 	if !util.Array2DEquals(res, myRes) {
@@ -34,7 +38,10 @@ func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
 }
 
 func testGetPolicyWithoutOrder(t *testing.T, e *casbin.Enforcer, res [][]string) {
-	myRes := e.GetPolicy()
+	myRes, err := e.GetPolicy()
+	if err != nil {
+		t.Error("Get Policy Error ", err)
+	}
 	log.Print("Policy: ", myRes)
 
 	if !arrayEqualsWithoutOrder(myRes, res) {
