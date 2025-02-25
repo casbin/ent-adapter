@@ -1,4 +1,4 @@
-Ent-Adapter
+Ent Adapter
 ===
 [![Go Report Card](https://goreportcard.com/badge/github.com/casbin/gorm-adapter)](https://goreportcard.com/report/github.com/casbin/ent-adapter)
 [![Go](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml)
@@ -24,7 +24,7 @@ Ent Adapter is the [ent](https://github.com/ent/ent) adapter for [Casbin](https:
 
 ## Notification
 
-The database used in adapter(like casbin) should be created manually before NewAdapter calling.
+The database used in the adapter should be created manually before NewAdapter calling.
 
 ## Getting Help
 
