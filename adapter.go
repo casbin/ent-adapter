@@ -198,8 +198,20 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 			}
 		}
 
-		_, err := tx.CasbinRule.CreateBulk(lines...).Save(a.ctx)
-		return err
+		// batch process
+		batchSize := 5000
+		for i := 0; i < len(lines); i += batchSize {
+			end := i + batchSize
+			if end > len(lines) {
+				end = len(lines)
+			}
+			batch := lines[i:end]
+
+			if _, err := tx.CasbinRule.CreateBulk(batch...).Save(a.ctx); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
 
