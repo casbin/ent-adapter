@@ -20,56 +20,56 @@ type CasbinRuleDelete struct {
 }
 
 // Where appends a list predicates to the CasbinRuleDelete builder.
-func (crd *CasbinRuleDelete) Where(ps ...predicate.CasbinRule) *CasbinRuleDelete {
-	crd.mutation.Where(ps...)
-	return crd
+func (_d *CasbinRuleDelete) Where(ps ...predicate.CasbinRule) *CasbinRuleDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (crd *CasbinRuleDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, crd.sqlExec, crd.mutation, crd.hooks)
+func (_d *CasbinRuleDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (crd *CasbinRuleDelete) ExecX(ctx context.Context) int {
-	n, err := crd.Exec(ctx)
+func (_d *CasbinRuleDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (crd *CasbinRuleDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *CasbinRuleDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(casbinrule.Table, sqlgraph.NewFieldSpec(casbinrule.FieldID, field.TypeInt))
-	if ps := crd.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, crd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	crd.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // CasbinRuleDeleteOne is the builder for deleting a single CasbinRule entity.
 type CasbinRuleDeleteOne struct {
-	crd *CasbinRuleDelete
+	_d *CasbinRuleDelete
 }
 
 // Where appends a list predicates to the CasbinRuleDelete builder.
-func (crdo *CasbinRuleDeleteOne) Where(ps ...predicate.CasbinRule) *CasbinRuleDeleteOne {
-	crdo.crd.mutation.Where(ps...)
-	return crdo
+func (_d *CasbinRuleDeleteOne) Where(ps ...predicate.CasbinRule) *CasbinRuleDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (crdo *CasbinRuleDeleteOne) Exec(ctx context.Context) error {
-	n, err := crdo.crd.Exec(ctx)
+func (_d *CasbinRuleDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (crdo *CasbinRuleDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (crdo *CasbinRuleDeleteOne) ExecX(ctx context.Context) {
-	if err := crdo.Exec(ctx); err != nil {
+func (_d *CasbinRuleDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -251,8 +251,8 @@ func (c *CasbinRuleClient) Update() *CasbinRuleUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CasbinRuleClient) UpdateOne(cr *CasbinRule) *CasbinRuleUpdateOne {
-	mutation := newCasbinRuleMutation(c.config, OpUpdateOne, withCasbinRule(cr))
+func (c *CasbinRuleClient) UpdateOne(_m *CasbinRule) *CasbinRuleUpdateOne {
+	mutation := newCasbinRuleMutation(c.config, OpUpdateOne, withCasbinRule(_m))
 	return &CasbinRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -269,8 +269,8 @@ func (c *CasbinRuleClient) Delete() *CasbinRuleDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CasbinRuleClient) DeleteOne(cr *CasbinRule) *CasbinRuleDeleteOne {
-	return c.DeleteOneID(cr.ID)
+func (c *CasbinRuleClient) DeleteOne(_m *CasbinRule) *CasbinRuleDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
