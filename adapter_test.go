@@ -18,8 +18,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/util"
+	"github.com/casbin/casbin/v3"
+	"github.com/casbin/casbin/v3/util"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/casbin/ent-adapter/ent"

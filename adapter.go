@@ -23,17 +23,15 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
-	"github.com/casbin/casbin/v2/persist"
+	"github.com/casbin/casbin/v3/persist"
 	"github.com/casbin/ent-adapter/ent/casbinrule"
 	"github.com/casbin/ent-adapter/ent/predicate"
 
-	"github.com/casbin/casbin/v2/model"
+	"github.com/casbin/casbin/v3/model"
 	"github.com/casbin/ent-adapter/ent"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/lib/pq"
-
-	//_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 )
 

@@ -1,12 +1,12 @@
 module github.com/casbin/ent-adapter
 
-go 1.24.6
+go 1.24.11
 
 require (
 	entgo.io/ent v0.14.5
-	github.com/casbin/casbin/v2 v2.135.0
+	github.com/casbin/casbin/v3 v3.8.1
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/jackc/pgx/v5 v5.7.6
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/lib/pq v1.10.9
 	//github.com/mattn/go-sqlite3 v1.14.6
 	github.com/pkg/errors v0.9.1
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.38.0 // indirect
+	ariga.io/atlas v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -33,8 +33,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
-	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
+	github.com/zclconf/go-cty-yaml v1.2.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
