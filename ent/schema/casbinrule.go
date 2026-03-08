@@ -29,7 +29,7 @@ func (CasbinRule) Edges() []ent.Edge {
 	return nil
 }
 
-func (CasbinRule) Index() []ent.Index {
+func (CasbinRule) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("Ptype", "V0", "V1", "V2", "V3", "V4", "V5").Unique(),
 	}

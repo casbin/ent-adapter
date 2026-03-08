@@ -24,6 +24,13 @@ var (
 		Name:       "casbin_rules",
 		Columns:    CasbinRulesColumns,
 		PrimaryKey: []*schema.Column{CasbinRulesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "casbinrule_ptype_v0_v1_v2_v3_v4_v5",
+				Unique:  true,
+				Columns: []*schema.Column{CasbinRulesColumns[1], CasbinRulesColumns[2], CasbinRulesColumns[3], CasbinRulesColumns[4], CasbinRulesColumns[5], CasbinRulesColumns[6], CasbinRulesColumns[7]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
