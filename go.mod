@@ -1,12 +1,12 @@
 module github.com/casbin/ent-adapter
 
-go 1.24.11
+go 1.25.0
 
 require (
 	entgo.io/ent v0.14.5
 	github.com/casbin/casbin/v3 v3.8.1
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/lib/pq v1.10.9
 	//github.com/mattn/go-sqlite3 v1.14.6
 	github.com/pkg/errors v0.9.1
