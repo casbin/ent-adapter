@@ -267,10 +267,11 @@ func testFilteredPolicy(t *testing.T, a *Adapter) {
 // testUniqueIndex covers the index on (ptype, v0..v5): storing a rule that is
 // already there is a no-op rather than a second row or an error.
 func testUniqueIndex(t *testing.T, a *Adapter) {
-	// initAdapter has just stored the four rules of rbac_policy.csv.
+	// initAdapter has just stored the five rules of rbac_policy.csv: four p
+	// rules and one g rule.
 	count, err := a.client.CasbinRule.Query().Count(a.ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, 4, count)
+	assert.Equal(t, 5, count)
 
 	// Re-adding a stored rule is what a replica does when its in-memory model
 	// has not caught up with another writer.
@@ -283,9 +284,11 @@ func testUniqueIndex(t *testing.T, a *Adapter) {
 		{"eve", "data3", "read"},
 	}))
 
+	// Only eve is new: the duplicates of alice's rule and of eve's own rule
+	// inside the batch collapse onto the same row.
 	count, err = a.client.CasbinRule.Query().Count(a.ctx)
 	assert.Nil(t, err)
-	assert.Equal(t, 5, count)
+	assert.Equal(t, 6, count)
 
 	eve, err := a.client.CasbinRule.Query().Where(casbinrule.V0EQ("eve")).Count(a.ctx)
 	assert.Nil(t, err)
