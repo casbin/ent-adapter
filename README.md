@@ -125,6 +125,55 @@ func main() {
 
 The database used in the adapter should be created manually before calling `NewAdapter`. The adapter will automatically create the `casbin_rule` table if it doesn't exist.
 
+## Upgrading an existing database
+
+A policy rule is now unique on `(ptype, v0, v1, v2, v3, v4, v5)`, and the seven
+columns are `varchar(100)` so that the index fits within the 3072-byte key limit
+InnoDB enforces. Both are enforced by the automatic migration that runs inside
+`NewAdapter` and `NewAdapterWithClient`, so a database written by an earlier
+version needs a look before the first start on this version. A fresh database
+needs nothing.
+
+Check for rules that no longer fit. The adapter runs this check itself and
+refuses to migrate while it returns anything, because a MySQL server running
+without strict mode would truncate the values rather than reject them:
+
+```sql
+SELECT * FROM casbin_rules
+WHERE CHAR_LENGTH(ptype) > 100 OR CHAR_LENGTH(v0) > 100 OR CHAR_LENGTH(v1) > 100
+   OR CHAR_LENGTH(v2) > 100 OR CHAR_LENGTH(v3) > 100 OR CHAR_LENGTH(v4) > 100
+   OR CHAR_LENGTH(v5) > 100;
+```
+
+Check for rules stored more than once. Nothing enforced uniqueness before, so
+duplicates may have accumulated, and the index cannot be built while they exist:
+
+```sql
+SELECT ptype, v0, v1, v2, v3, v4, v5, COUNT(*) AS copies
+FROM casbin_rules GROUP BY ptype, v0, v1, v2, v3, v4, v5 HAVING COUNT(*) > 1;
+```
+
+Duplicates are redundant by definition — casbin evaluates a rule the same way
+whether it is stored once or ten times — so keeping the lowest `id` of each
+group is safe:
+
+```sql
+DELETE c FROM casbin_rules c
+JOIN (
+  SELECT MIN(id) AS keep_id, ptype, v0, v1, v2, v3, v4, v5
+  FROM casbin_rules GROUP BY ptype, v0, v1, v2, v3, v4, v5 HAVING COUNT(*) > 1
+) d ON c.ptype = d.ptype AND c.v0 = d.v0 AND c.v1 = d.v1 AND c.v2 = d.v2
+   AND c.v3 = d.v3 AND c.v4 = d.v4 AND c.v5 = d.v5
+WHERE c.id > d.keep_id;
+```
+
+On PostgreSQL, use `DELETE FROM casbin_rules WHERE id NOT IN (SELECT MIN(id)
+FROM casbin_rules GROUP BY ptype, v0, v1, v2, v3, v4, v5);` instead.
+
+Adding a rule that is already stored stays a successful no-op rather than
+becoming an error, so replicas whose in-memory model has fallen behind another
+writer keep working.
+
 ## Getting Help
 
 - [Casbin](https://github.com/apache/casbin)

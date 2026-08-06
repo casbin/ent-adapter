@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/apache/casbin-ent-adapter/ent"
+	"github.com/apache/casbin-ent-adapter/ent/casbinrule"
 )
 
 func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
@@ -263,6 +264,68 @@ func testFilteredPolicy(t *testing.T, a *Adapter) {
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
 }
 
+// testUniqueIndex covers the index on (ptype, v0..v5): storing a rule that is
+// already there is a no-op rather than a second row or an error.
+func testUniqueIndex(t *testing.T, a *Adapter) {
+	// initAdapter has just stored the four rules of rbac_policy.csv.
+	count, err := a.client.CasbinRule.Query().Count(a.ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, count)
+
+	// Re-adding a stored rule is what a replica does when its in-memory model
+	// has not caught up with another writer.
+	assert.Nil(t, a.AddPolicy("p", "p", []string{"alice", "data1", "read"}))
+
+	// The same, in bulk, and with a duplicate inside the batch itself.
+	assert.Nil(t, a.AddPolicies("p", "p", [][]string{
+		{"alice", "data1", "read"},
+		{"eve", "data3", "read"},
+		{"eve", "data3", "read"},
+	}))
+
+	count, err = a.client.CasbinRule.Query().Count(a.ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 5, count)
+
+	eve, err := a.client.CasbinRule.Query().Where(casbinrule.V0EQ("eve")).Count(a.ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, eve)
+
+	// A model carrying the same rule twice must still save.
+	e, err := casbin.NewEnforcer("examples/rbac_model.conf")
+	assert.Nil(t, err)
+	m := e.GetModel()
+	assert.Nil(t, m.AddPolicy("p", "p", []string{"carol", "data4", "read"}))
+	assert.Nil(t, m.AddPolicy("p", "p", []string{"carol", "data4", "read"}))
+	assert.Nil(t, a.SavePolicy(m))
+
+	count, err = a.client.CasbinRule.Query().Count(a.ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, count)
+}
+
+func TestDedupPolicyLines(t *testing.T) {
+	lines := []policyLine{
+		{ptype: "p", rule: []string{"alice", "data1", "read"}},
+		{ptype: "p", rule: []string{"alice", "data1", "read"}},
+		{ptype: "p", rule: []string{"alice", "data1", "write"}},
+		{ptype: "g", rule: []string{"alice", "data1", "read"}},
+		// Trailing empty values are what the unused columns already default
+		// to, so this is the same row as the shorter rule above.
+		{ptype: "p", rule: []string{"alice", "data1", "write", ""}},
+	}
+
+	assert.Equal(t, []policyLine{lines[0], lines[2], lines[3]}, dedupPolicyLines(lines))
+}
+
+func TestNewPolicyKeyIgnoresExtraValues(t *testing.T) {
+	// Only Ptype and V0..V5 are stored, so a longer rule cannot overflow the
+	// key, and the values past V5 do not take part in its identity.
+	assert.Equal(t,
+		newPolicyKey("p", []string{"0", "1", "2", "3", "4", "5"}),
+		newPolicyKey("p", []string{"0", "1", "2", "3", "4", "5", "6"}))
+}
+
 func TestAdapters(t *testing.T) {
 	a := initAdapter(t, "mysql", "root:@tcp(127.0.0.1:3306)/casbin")
 	testAutoSave(t, a)
@@ -299,4 +362,10 @@ func TestAdapters(t *testing.T) {
 	testUpdatePolicies(t, a)
 	testUpdateFilteredPolicies(t, a)
 	testFilteredPolicy(t, a)
+
+	a = initAdapter(t, "mysql", "root:@tcp(127.0.0.1:3306)/casbin")
+	testUniqueIndex(t, a)
+
+	a = initAdapter(t, "postgres", "user=postgres password=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=casbin")
+	testUniqueIndex(t, a)
 }

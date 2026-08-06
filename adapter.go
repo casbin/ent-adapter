@@ -29,6 +29,7 @@ import (
 
 	"github.com/casbin/casbin/v3/model"
 	"github.com/apache/casbin-ent-adapter/ent"
+	"github.com/apache/casbin-ent-adapter/ent/schema"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/lib/pq"
@@ -39,6 +40,21 @@ const (
 	DefaultTableName = "casbin_rule"
 	DefaultDatabase  = "casbin"
 )
+
+// batchSize caps how many rows go into a single INSERT.
+const batchSize = 5000
+
+// policyColumns are the columns covered by the unique index on a policy rule.
+// They double as the conflict target of every insert.
+var policyColumns = []string{
+	casbinrule.FieldPtype,
+	casbinrule.FieldV0,
+	casbinrule.FieldV1,
+	casbinrule.FieldV2,
+	casbinrule.FieldV3,
+	casbinrule.FieldV4,
+	casbinrule.FieldV5,
+}
 
 type Adapter struct {
 	client *ent.Client
@@ -88,7 +104,7 @@ func NewAdapter(driverName, dataSourceName string, options ...Option) (*Adapter,
 			return nil, err
 		}
 	}
-	if err := client.Schema.Create(a.ctx); err != nil {
+	if err := a.migrate(); err != nil {
 		return nil, err
 	}
 	return a, nil
@@ -106,10 +122,67 @@ func NewAdapterWithClient(client *ent.Client, options ...Option) (*Adapter, erro
 			return nil, err
 		}
 	}
-	if err := client.Schema.Create(a.ctx); err != nil {
+	if err := a.migrate(); err != nil {
 		return nil, err
 	}
 	return a, nil
+}
+
+// migrate brings the schema up to date, guarding the two ways that can go wrong
+// on a database created before the policy tuple became unique.
+func (a *Adapter) migrate() error {
+	if err := a.checkFieldLengths(); err != nil {
+		return err
+	}
+	if err := a.client.Schema.Create(a.ctx); err != nil {
+		return explainDuplicateRules(err)
+	}
+	return nil
+}
+
+// checkFieldLengths refuses to migrate a table still holding policy values
+// longer than the column width that the unique index requires. Narrowing such a
+// column fails outright on a MySQL server in strict mode, but a server without
+// it truncates the values instead, quietly rewriting the stored policies.
+//
+// The probe is best effort. On a fresh database the table does not exist yet and
+// the query fails, which says nothing about anyone's data, so probe errors are
+// dropped and the migration itself is left to report real problems.
+func (a *Adapter) checkFieldLengths() error {
+	tooLong, err := a.client.CasbinRule.Query().Where(func(s *entsql.Selector) {
+		// LENGTH counts bytes on MySQL, so the portable spelling there is
+		// CHAR_LENGTH, which SQLite in turn does not have.
+		length := "CHAR_LENGTH"
+		if s.Dialect() == dialect.SQLite {
+			length = "LENGTH"
+		}
+		overflows := make([]*entsql.Predicate, 0, len(policyColumns))
+		for _, column := range policyColumns {
+			overflows = append(overflows, entsql.ExprP(
+				fmt.Sprintf("%s(%s) > %d", length, s.C(column), schema.MaxFieldLen)))
+		}
+		s.Where(entsql.Or(overflows...))
+	}).Exist(a.ctx)
+	if err != nil || !tooLong {
+		return nil
+	}
+	return fmt.Errorf("casbin_rules holds policy values longer than %d characters, "+
+		"which the columns can no longer store; shorten them before upgrading, "+
+		"otherwise the migration truncates them", schema.MaxFieldLen)
+}
+
+// explainDuplicateRules names the policy data behind a migration that failed
+// because the table already holds rows the new unique index forbids. Drivers
+// report it as a bare constraint violation naming only an index.
+func explainDuplicateRules(err error) error {
+	msg := strings.ToLower(err.Error())
+	for _, marker := range []string{"duplicate entry", "duplicate key value", "unique constraint failed"} {
+		if strings.Contains(msg, marker) {
+			return errors.Wrap(err, "casbin_rules holds duplicate policy rules, which the unique "+
+				"index on (ptype, v0..v5) forbids; delete the redundant rows and retry")
+		}
+	}
+	return err
 }
 
 // LoadPolicy loads all policy rules from the storage.
@@ -184,36 +257,15 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 		if _, err := tx.CasbinRule.Delete().Exec(a.ctx); err != nil {
 			return err
 		}
-		lines := make([]*ent.CasbinRuleCreate, 0)
+		lines := make([]policyLine, 0)
 
-		for ptype, ast := range model["p"] {
-			for _, policy := range ast.Policy {
-				line := a.savePolicyLine(tx, ptype, policy)
-				lines = append(lines, line)
+		for _, sec := range []string{"p", "g"} {
+			for ptype, ast := range model[sec] {
+				lines = append(lines, policyLines(ptype, ast.Policy)...)
 			}
 		}
 
-		for ptype, ast := range model["g"] {
-			for _, policy := range ast.Policy {
-				line := a.savePolicyLine(tx, ptype, policy)
-				lines = append(lines, line)
-			}
-		}
-
-		// batch process
-		batchSize := 5000
-		for i := 0; i < len(lines); i += batchSize {
-			end := i + batchSize
-			if end > len(lines) {
-				end = len(lines)
-			}
-			batch := lines[i:end]
-
-			if _, err := tx.CasbinRule.CreateBulk(batch...).Save(a.ctx); err != nil {
-				return err
-			}
-		}
-		return nil
+		return a.insertPolicyLines(tx, lines)
 	})
 }
 
@@ -221,8 +273,7 @@ func (a *Adapter) SavePolicy(model model.Model) error {
 // This is part of the Auto-Save feature.
 func (a *Adapter) AddPolicy(sec string, ptype string, rule []string) error {
 	return a.WithTx(func(tx *ent.Tx) error {
-		_, err := a.savePolicyLine(tx, ptype, rule).Save(a.ctx)
-		return err
+		return a.insertPolicyLines(tx, []policyLine{{ptype: ptype, rule: rule}})
 	})
 }
 
@@ -402,6 +453,83 @@ func (a *Adapter) savePolicyLine(tx *ent.Tx, ptype string, rule []string) *ent.C
 	return line
 }
 
+// policyKey is the storage identity of a rule: the tuple covered by the unique
+// index. Two rules sharing a key map to the same row.
+type policyKey [7]string
+
+func newPolicyKey(ptype string, rule []string) policyKey {
+	key := policyKey{ptype}
+	for i := 0; i < len(rule) && i+1 < len(key); i++ {
+		key[i+1] = rule[i]
+	}
+	return key
+}
+
+// policyLine pairs a rule with its ptype so rules coming from different model
+// sections can be deduplicated against each other.
+type policyLine struct {
+	ptype string
+	rule  []string
+}
+
+func policyLines(ptype string, rules [][]string) []policyLine {
+	lines := make([]policyLine, 0, len(rules))
+	for _, rule := range rules {
+		lines = append(lines, policyLine{ptype: ptype, rule: rule})
+	}
+	return lines
+}
+
+// dedupPolicyLines keeps the first line of every distinct key. A casbin model
+// can legitimately carry duplicates -- loading a policy file appends each line
+// without checking whether the model already holds it -- and writing them out
+// unchanged would now collide with the unique index.
+func dedupPolicyLines(lines []policyLine) []policyLine {
+	seen := make(map[policyKey]struct{}, len(lines))
+	out := make([]policyLine, 0, len(lines))
+	for _, line := range lines {
+		key := newPolicyKey(line.ptype, line.rule)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, line)
+	}
+	return out
+}
+
+// insertPolicyLines writes lines in batches, leaving rows that already exist
+// untouched.
+//
+// Ignoring conflicts is what keeps writes idempotent now that the tuple is
+// unique. The enforcer screens duplicates against its in-memory model, but that
+// model is per-process: a second replica, or one whose model has gone stale,
+// can still submit a rule that is already stored. That used to insert a second
+// identical row; it must not start failing the caller instead.
+func (a *Adapter) insertPolicyLines(tx *ent.Tx, lines []policyLine) error {
+	lines = dedupPolicyLines(lines)
+	for start := 0; start < len(lines); start += batchSize {
+		end := start + batchSize
+		if end > len(lines) {
+			end = len(lines)
+		}
+		batch := make([]*ent.CasbinRuleCreate, 0, end-start)
+		for _, line := range lines[start:end] {
+			batch = append(batch, a.savePolicyLine(tx, line.ptype, line.rule))
+		}
+		// The conflict target is named explicitly because PostgreSQL requires
+		// an inference specification for DO UPDATE. MySQL has no target in its
+		// ON DUPLICATE KEY syntax and ignores it.
+		if err := tx.CasbinRule.CreateBulk(batch...).
+			OnConflictColumns(policyColumns...).
+			Ignore().
+			Exec(a.ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UpdatePolicy updates a policy rule from storage.
 // This is part of the Auto-Save feature.
 func (a *Adapter) UpdatePolicy(sec string, ptype string, oldRule, newPolicy []string) error {
@@ -445,14 +573,7 @@ func (a *Adapter) UpdatePolicies(sec string, ptype string, oldRules, newRules []
 				return err
 			}
 		}
-		lines := make([]*ent.CasbinRuleCreate, 0)
-		for _, policy := range newRules {
-			lines = append(lines, a.savePolicyLine(tx, ptype, policy))
-		}
-		if _, err := tx.CasbinRule.CreateBulk(lines...).Save(a.ctx); err != nil {
-			return err
-		}
-		return nil
+		return a.insertPolicyLines(tx, policyLines(ptype, newRules))
 	})
 }
 
@@ -513,14 +634,7 @@ func (a *Adapter) UpdateFilteredPolicies(sec string, ptype string, newPolicies [
 }
 
 func (a *Adapter) createPolicies(tx *ent.Tx, ptype string, policies [][]string) error {
-	lines := make([]*ent.CasbinRuleCreate, 0)
-	for _, policy := range policies {
-		lines = append(lines, a.savePolicyLine(tx, ptype, policy))
-	}
-	if _, err := tx.CasbinRule.CreateBulk(lines...).Save(a.ctx); err != nil {
-		return err
-	}
-	return nil
+	return a.insertPolicyLines(tx, policyLines(ptype, policies))
 }
 
 func CasbinRuleToStringArray(rule *ent.CasbinRule) []string {

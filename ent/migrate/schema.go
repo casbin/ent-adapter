@@ -11,19 +11,26 @@ var (
 	// CasbinRulesColumns holds the columns for the "casbin_rules" table.
 	CasbinRulesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "ptype", Type: field.TypeString, Default: ""},
-		{Name: "v0", Type: field.TypeString, Default: ""},
-		{Name: "v1", Type: field.TypeString, Default: ""},
-		{Name: "v2", Type: field.TypeString, Default: ""},
-		{Name: "v3", Type: field.TypeString, Default: ""},
-		{Name: "v4", Type: field.TypeString, Default: ""},
-		{Name: "v5", Type: field.TypeString, Default: ""},
+		{Name: "ptype", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "v0", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "v1", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "v2", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "v3", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "v4", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "v5", Type: field.TypeString, Size: 100, Default: ""},
 	}
 	// CasbinRulesTable holds the schema information for the "casbin_rules" table.
 	CasbinRulesTable = &schema.Table{
 		Name:       "casbin_rules",
 		Columns:    CasbinRulesColumns,
 		PrimaryKey: []*schema.Column{CasbinRulesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "casbinrule_ptype_v0_v1_v2_v3_v4_v5",
+				Unique:  true,
+				Columns: []*schema.Column{CasbinRulesColumns[1], CasbinRulesColumns[2], CasbinRulesColumns[3], CasbinRulesColumns[4], CasbinRulesColumns[5], CasbinRulesColumns[6], CasbinRulesColumns[7]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
