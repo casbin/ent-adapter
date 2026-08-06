@@ -1,13 +1,12 @@
 Ent Adapter
 ====
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/casbin/ent-adapter)](https://goreportcard.com/report/github.com/casbin/ent-adapter)
-[![Go](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml)
+[![Lint](https://github.com/casbin/ent-adapter/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/casbin/ent-adapter/actions/workflows/golangci-lint.yml)
+[![Build](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/casbin/ent-adapter/badge.svg?branch=master)](https://coveralls.io/github/casbin/ent-adapter?branch=master)
-[![Godoc](https://godoc.org/github.com/casbin/ent-adapter?status.svg)](https://godoc.org/github.com/casbin/ent-adapter)
+[![Godoc](https://godoc.org/github.com/casbin/ent-adapter?status.svg)](https://pkg.go.dev/github.com/casbin/ent-adapter)
 [![Release](https://img.shields.io/github/release/casbin/ent-adapter.svg)](https://github.com/casbin/ent-adapter/releases/latest)
 [![Discord](https://img.shields.io/discord/1022748306096537660?logo=discord&label=discord&color=5865F2)](https://discord.gg/S5UjpzGZjN)
-[![Sourcegraph](https://sourcegraph.com/github.com/casbin/ent-adapter/-/badge.svg)](https://sourcegraph.com/github.com/casbin/ent-adapter?badge)
 
 Ent Adapter is the [Ent](https://entgo.io/) adapter for [Casbin](https://github.com/casbin/casbin). With this library, Casbin can load policy from Ent-supported databases or save policy to them.
 
