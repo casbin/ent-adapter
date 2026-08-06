@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
+	"github.com/apache/casbin-ent-adapter/ent/casbinrule"
 )
 
 // CasbinRuleCreate is the builder for creating a CasbinRule entity.

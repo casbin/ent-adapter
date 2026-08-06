@@ -1,4 +1,4 @@
-module github.com/casbin/ent-adapter
+module github.com/apache/casbin-ent-adapter
 
 go 1.24.11
 

@@ -4,7 +4,7 @@ package casbinrule
 
 import (
 	"entgo.io/ent/dialect/sql"
-	"github.com/casbin/ent-adapter/ent/predicate"
+	"github.com/apache/casbin-ent-adapter/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.

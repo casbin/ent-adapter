@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   release:
-    if: github.repository == 'casbin/ent-adapter'
+    if: github.repository == 'apache/casbin-ent-adapter'
     runs-on: ubuntu-latest
     outputs:
       is-rc: ${{ steps.meta.outputs.is-rc }}
@@ -85,7 +85,7 @@ jobs:
       - name: Publish to the Go module proxy
         run: |
           set -euo pipefail
-          module="github.com/casbin/ent-adapter"
+          module="github.com/apache/casbin-ent-adapter"
           version="${GITHUB_REF_NAME}"
 
           # Go has no upload step: requesting the version from proxy.golang.org

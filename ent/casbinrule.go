@@ -8,7 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/casbin/ent-adapter/ent/casbinrule"
+	"github.com/apache/casbin-ent-adapter/ent/casbinrule"
 )
 
 // CasbinRule is the model entity for the CasbinRule schema.

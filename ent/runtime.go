@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"github.com/casbin/ent-adapter/ent/casbinrule"
-	"github.com/casbin/ent-adapter/ent/schema"
+	"github.com/apache/casbin-ent-adapter/ent/casbinrule"
+	"github.com/apache/casbin-ent-adapter/ent/schema"
 )
 
 // The init function reads all schema descriptors with runtime code

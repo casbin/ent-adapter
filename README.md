@@ -1,14 +1,14 @@
 Ent Adapter
 ====
 
-[![Lint](https://github.com/casbin/ent-adapter/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/casbin/ent-adapter/actions/workflows/golangci-lint.yml)
-[![Build](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/casbin/ent-adapter/actions/workflows/ci.yml)
-[![Coverage Status](https://coveralls.io/repos/github/casbin/ent-adapter/badge.svg?branch=master)](https://coveralls.io/github/casbin/ent-adapter?branch=master)
-[![Godoc](https://godoc.org/github.com/casbin/ent-adapter?status.svg)](https://pkg.go.dev/github.com/casbin/ent-adapter)
-[![Release](https://img.shields.io/github/release/casbin/ent-adapter.svg)](https://github.com/casbin/ent-adapter/releases/latest)
+[![Lint](https://github.com/apache/casbin-ent-adapter/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/apache/casbin-ent-adapter/actions/workflows/golangci-lint.yml)
+[![Build](https://github.com/apache/casbin-ent-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/apache/casbin-ent-adapter/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/apache/casbin-ent-adapter/badge.svg?branch=master)](https://coveralls.io/github/apache/casbin-ent-adapter?branch=master)
+[![Godoc](https://godoc.org/github.com/apache/casbin-ent-adapter?status.svg)](https://pkg.go.dev/github.com/apache/casbin-ent-adapter)
+[![Release](https://img.shields.io/github/release/apache/casbin-ent-adapter.svg)](https://github.com/apache/casbin-ent-adapter/releases/latest)
 [![Discord](https://img.shields.io/discord/1022748306096537660?logo=discord&label=discord&color=5865F2)](https://discord.gg/S5UjpzGZjN)
 
-Ent Adapter is the [Ent](https://entgo.io/) adapter for [Casbin](https://github.com/casbin/casbin). With this library, Casbin can load policy from Ent-supported databases or save policy to them.
+Ent Adapter is the [Ent](https://entgo.io/) adapter for [Casbin](https://github.com/apache/casbin). With this library, Casbin can load policy from Ent-supported databases or save policy to them.
 
 Based on [Ent Supported Drivers](https://entgo.io/docs/sql-integration), the current supported databases are:
 
@@ -20,7 +20,7 @@ Based on [Ent Supported Drivers](https://entgo.io/docs/sql-integration), the cur
 ## Installation
 
 ```bash
-go get github.com/casbin/ent-adapter
+go get github.com/apache/casbin-ent-adapter
 ```
 
 ## Simple MySQL Example
@@ -30,7 +30,7 @@ package main
 
 import (
 	"github.com/casbin/casbin/v3"
-	entadapter "github.com/casbin/ent-adapter"
+	entadapter "github.com/apache/casbin-ent-adapter"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -63,7 +63,7 @@ package main
 
 import (
 	"github.com/casbin/casbin/v3"
-	entadapter "github.com/casbin/ent-adapter"
+	entadapter "github.com/apache/casbin-ent-adapter"
 	_ "github.com/lib/pq"
 )
 
@@ -98,8 +98,8 @@ package main
 
 import (
 	"github.com/casbin/casbin/v3"
-	entadapter "github.com/casbin/ent-adapter"
-	"github.com/casbin/ent-adapter/ent"
+	entadapter "github.com/apache/casbin-ent-adapter"
+	"github.com/apache/casbin-ent-adapter/ent"
 )
 
 func main() {
@@ -127,7 +127,7 @@ The database used in the adapter should be created manually before calling `NewA
 
 ## Getting Help
 
-- [Casbin](https://github.com/casbin/casbin)
+- [Casbin](https://github.com/apache/casbin)
 
 ## License
 
