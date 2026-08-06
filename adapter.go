@@ -119,7 +119,9 @@ func (a *Adapter) LoadPolicy(model model.Model) error {
 		return err
 	}
 	for _, policy := range policies {
-		loadPolicyLine(policy, model)
+		if err := loadPolicyLine(policy, model); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -133,7 +135,7 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 		return fmt.Errorf("invalid filter type: %v", reflect.TypeOf(filter))
 	}
 
-	session := a.client.CasbinRule.Query()
+	session := a.client.CasbinRule.Query().Order(ent.Asc("id"))
 	if len(filterValue.Ptype) != 0 {
 		session.Where(casbinrule.PtypeIn(filterValue.Ptype...))
 	}
@@ -162,7 +164,9 @@ func (a *Adapter) LoadFilteredPolicy(model model.Model, filter interface{}) erro
 	}
 
 	for _, line := range lines {
-		loadPolicyLine(line, model)
+		if err := loadPolicyLine(line, model); err != nil {
+			return err
+		}
 	}
 	a.filtered = true
 
@@ -324,7 +328,7 @@ func (a *Adapter) WithTx(fn func(tx *ent.Tx) error) error {
 	return nil
 }
 
-func loadPolicyLine(line *ent.CasbinRule, model model.Model) {
+func loadPolicyLine(line *ent.CasbinRule, model model.Model) error {
 	var p = []string{line.Ptype,
 		line.V0, line.V1, line.V2, line.V3, line.V4, line.V5}
 
@@ -343,7 +347,7 @@ func loadPolicyLine(line *ent.CasbinRule, model model.Model) {
 		lineText = strings.Join(p[:2], ", ")
 	}
 
-	persist.LoadPolicyLine(lineText, model)
+	return persist.LoadPolicyLine(lineText, model)
 }
 
 func (a *Adapter) toInstance(ptype string, rule []string) *ent.CasbinRule {

@@ -164,9 +164,10 @@ func testAutoSave(t *testing.T, a *Adapter) {
 
 	// Because AutoSave is disabled, the policy change only affects the policy in Casbin enforcer,
 	// it doesn't affect the policy in the storage.
-	e.AddPolicy("alice", "data1", "write")
+	_, err := e.AddPolicy("alice", "data1", "write")
+	assert.Nil(t, err)
 	// Reload the policy from the storage to see the effect.
-	e.LoadPolicy()
+	assert.Nil(t, e.LoadPolicy())
 	// This is still the original policy.
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 
@@ -175,58 +176,40 @@ func testAutoSave(t *testing.T, a *Adapter) {
 
 	// Because AutoSave is enabled, the policy change not only affects the policy in Casbin enforcer,
 	// but also affects the policy in the storage.
-	e.AddPolicy("alice", "data1", "write")
+	_, err = e.AddPolicy("alice", "data1", "write")
+	assert.Nil(t, err)
 	// Reload the policy from the storage to see the effect.
-	e.LoadPolicy()
+	assert.Nil(t, e.LoadPolicy())
 	// The policy has a new rule: {"alice", "data1", "write"}.
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}, {"alice", "data1", "write"}})
 
 	// Remove the added rule.
-	e.RemovePolicy("alice", "data1", "write")
-	e.LoadPolicy()
+	_, err = e.RemovePolicy("alice", "data1", "write")
+	assert.Nil(t, err)
+	assert.Nil(t, e.LoadPolicy())
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 
 	// Remove "data2_admin" related policy rules via a filter.
 	// Two rules: {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"} are deleted.
-	e.RemoveFilteredPolicy(0, "data2_admin")
-	e.LoadPolicy()
+	_, err = e.RemoveFilteredPolicy(0, "data2_admin")
+	assert.Nil(t, err)
+	assert.Nil(t, e.LoadPolicy())
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
 
-	e.RemovePolicies([][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
-	e.LoadPolicy()
+	_, err = e.RemovePolicies([][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
+	assert.Nil(t, err)
+	assert.Nil(t, e.LoadPolicy())
 	testGetPolicy(t, e, [][]string{})
 }
-
-//func testFilteredPolicy(t *testing.T, a *Adapter) {
-//	// NewEnforcer() without an adapter will not auto load the policy
-//	e, _ := casbin.NewEnforcer("examples/rbac_model.conf")
-//	// Now set the adapter
-//	e.SetAdapter(a)
-//
-//	// Load only alice's policies
-//	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"alice"}}))
-//	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}})
-//
-//	// Load only bob's policies
-//	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"bob"}}))
-//	testGetPolicy(t, e, [][]string{{"bob", "data2", "write"}})
-//
-//	// Load policies for data2_admin
-//	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"data2_admin"}}))
-//	testGetPolicy(t, e, [][]string{{"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
-//
-//	// Load policies for alice and bob
-//	assert.Nil(t, e.LoadFilteredPolicy(Filter{V0: []string{"alice", "bob"}}))
-//	testGetPolicy(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "write"}})
-//}
 
 func testUpdatePolicy(t *testing.T, a *Adapter) {
 	// NewEnforcer() will load the policy automatically.
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
 	e.EnableAutoSave(true)
-	e.UpdatePolicy([]string{"alice", "data1", "read"}, []string{"alice", "data1", "write"})
-	e.LoadPolicy()
+	_, err := e.UpdatePolicy([]string{"alice", "data1", "read"}, []string{"alice", "data1", "write"})
+	assert.Nil(t, err)
+	assert.Nil(t, e.LoadPolicy())
 	testGetPolicy(t, e, [][]string{{"alice", "data1", "write"}, {"bob", "data2", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
@@ -235,8 +218,9 @@ func testUpdatePolicies(t *testing.T, a *Adapter) {
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
 	e.EnableAutoSave(true)
-	e.UpdatePolicies([][]string{{"alice", "data1", "write"}, {"bob", "data2", "write"}}, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}})
-	e.LoadPolicy()
+	_, err := e.UpdatePolicies([][]string{{"alice", "data1", "write"}, {"bob", "data2", "write"}}, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}})
+	assert.Nil(t, err)
+	assert.Nil(t, e.LoadPolicy())
 	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "read"}, {"bob", "data2", "read"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}})
 }
 
@@ -245,9 +229,11 @@ func testUpdateFilteredPolicies(t *testing.T, a *Adapter) {
 	e, _ := casbin.NewEnforcer("examples/rbac_model.conf", a)
 
 	e.EnableAutoSave(true)
-	e.UpdateFilteredPolicies([][]string{{"alice", "data1", "write"}}, 0, "alice", "data1", "read")
-	e.UpdateFilteredPolicies([][]string{{"bob", "data2", "read"}}, 0, "bob", "data2")
-	e.LoadPolicy()
+	_, err := e.UpdateFilteredPolicies([][]string{{"alice", "data1", "write"}}, 0, "alice", "data1", "read")
+	assert.Nil(t, err)
+	_, err = e.UpdateFilteredPolicies([][]string{{"bob", "data2", "read"}}, 0, "bob", "data2")
+	assert.Nil(t, err)
+	assert.Nil(t, e.LoadPolicy())
 	testGetPolicyWithoutOrder(t, e, [][]string{{"alice", "data1", "write"}, {"data2_admin", "data2", "read"}, {"data2_admin", "data2", "write"}, {"bob", "data2", "read"}})
 }
 
@@ -306,9 +292,11 @@ func TestAdapters(t *testing.T) {
 	testUpdatePolicy(t, a)
 	testUpdatePolicies(t, a)
 	testUpdateFilteredPolicies(t, a)
+	testFilteredPolicy(t, a)
 
 	a = initAdapter(t, "postgres", "user=postgres password=postgres host=127.0.0.1 port=5432 sslmode=disable dbname=casbin")
 	testUpdatePolicy(t, a)
 	testUpdatePolicies(t, a)
 	testUpdateFilteredPolicies(t, a)
+	testFilteredPolicy(t, a)
 }
